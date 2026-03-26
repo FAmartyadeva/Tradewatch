@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
   <title>Tradewatch</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -14,10 +14,10 @@
       --text-secondary: #6e6e73;
       --text-tertiary: #aeaeb2;
       --accent: #0071e3;
-      --green: #1a9e5c;
-      --green-bg: #eaf6f0;
       --red: #d93025;
       --red-bg: #fdf0ef;
+      --blue: #185fa5;
+      --blue-bg: #e6f1fb;
       --neutral-bg: #f0f0f5;
       --radius: 18px;
       --radius-sm: 10px;
@@ -27,25 +27,28 @@
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
       background: var(--bg); color: var(--text-primary); min-height: 100vh;
     }
+
+    /* Header */
     header {
-      background: rgba(255,255,255,0.82);
+      background: rgba(255,255,255,0.88);
       backdrop-filter: saturate(180%) blur(24px);
       -webkit-backdrop-filter: saturate(180%) blur(24px);
       border-bottom: 1px solid var(--border);
       position: sticky; top: 0; z-index: 100;
     }
     .header-inner {
-      max-width: 1280px; margin: 0 auto; height: 58px; padding: 0 36px;
+      max-width: 1280px; margin: 0 auto; height: 54px; padding: 0 16px;
       display: flex; align-items: center; justify-content: space-between;
     }
     .logo { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
     .logo span { color: var(--accent); }
-    .header-right { display: flex; align-items: center; gap: 10px; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
     .last-updated { font-size: 12px; color: var(--text-tertiary); }
     .btn-refresh {
       background: none; border: 1px solid var(--border); border-radius: 20px;
-      padding: 6px 16px; font-size: 13px; color: var(--accent); cursor: pointer;
-      display: flex; align-items: center; gap: 6px; transition: background 0.15s;
+      padding: 6px 14px; font-size: 13px; color: var(--accent); cursor: pointer;
+      display: flex; align-items: center; gap: 5px; transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
     }
     .btn-refresh:hover { background: #eaf2fd; }
     .btn-refresh:disabled { opacity: 0.5; cursor: default; }
@@ -56,85 +59,155 @@
       background: none; border: 1px solid var(--border); border-radius: 50%;
       width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
       font-size: 15px; cursor: pointer; color: var(--text-secondary); transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent; flex-shrink: 0;
     }
-    .btn-icon:hover { background: var(--neutral-bg); color: var(--text-primary); }
-    .main { max-width: 1280px; margin: 0 auto; padding: 28px 36px 60px; }
+    .btn-icon:hover { background: var(--neutral-bg); }
+
+    /* Main */
+    .main { max-width: 1280px; margin: 0 auto; padding: 14px 12px 80px; }
     .status-bar {
-      display: flex; align-items: center; gap: 8px; margin-bottom: 24px;
-      padding: 9px 16px; background: var(--surface); border: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+      padding: 9px 14px; background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius-sm); font-size: 13px; color: var(--text-secondary);
     }
     .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--text-tertiary); }
     .dot.loading { background: #f5a623; animation: pulse 1s infinite; }
-    .dot.success { background: var(--green); }
+    .dot.success { background: #1a9e5c; }
     .dot.error   { background: var(--red); }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
     .section-label {
       font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
-      text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 14px;
+      text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 12px;
     }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+
+    /* Grid */
+    .grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 640px)  { .grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+
+    /* Card */
     .card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 22px 22px 20px;
+      border-radius: var(--radius); padding: 16px 14px 14px;
       box-shadow: var(--shadow); position: relative; overflow: hidden;
-      transition: box-shadow 0.2s, transform 0.18s;
     }
     .card::before {
       content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
       background: var(--card-top, transparent);
       border-radius: var(--radius) var(--radius) 0 0;
     }
-    .card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.11); transform: translateY(-2px); }
-    .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-    .ticker-wrap { display: flex; align-items: center; gap: 9px; }
-    .num { width: 22px; height: 22px; border-radius: 6px; background: var(--neutral-bg); font-size: 10px; font-weight: 700; color: var(--text-tertiary); display: flex; align-items: center; justify-content: center; }
-    .ticker { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+
+    /* Card header */
+    .card-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .ticker-wrap { display: flex; align-items: center; gap: 8px; }
+    .num {
+      width: 22px; height: 22px; border-radius: 6px; background: var(--neutral-bg);
+      font-size: 10px; font-weight: 700; color: var(--text-tertiary);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .ticker { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
     .price-wrap { text-align: right; }
-    .price { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
-    .badge { display: inline-flex; align-items: center; gap: 3px; margin-top: 4px; padding: 3px 9px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-    .badge.up   { background: var(--green-bg); color: var(--green); }
+    .price-row { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 3px 9px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    }
+    .badge.up   { background: #eaf6f0; color: #1a9e5c; }
     .badge.down { background: var(--red-bg); color: var(--red); }
     .badge.flat { background: var(--neutral-bg); color: var(--text-secondary); }
-    .zones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .zone { border-radius: var(--radius-sm); padding: 11px 13px; }
-    .zone.s { background: var(--green-bg); }
-    .zone.r { background: var(--red-bg); }
-    .zone-title { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 7px; }
-    .zone.s .zone-title { color: var(--green); }
-    .zone.r .zone-title { color: var(--red); }
-    .level { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; font-size: 13px; font-weight: 500; }
-    .level:last-child { margin-bottom: 0; }
-    .ldot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-    .zone.s .ldot { background: var(--green); }
-    .zone.r .ldot { background: var(--red); }
-    .ltag { font-size: 10px; color: var(--text-tertiary); font-weight: 500; }
-    .prev-price { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
-    .skel { background: linear-gradient(90deg,#ebebeb 25%,#f3f3f3 50%,#ebebeb 75%); background-size: 800px 100%; animation: shimmer 1.3s infinite; border-radius: 6px; }
+    .price { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+    .prev-price { font-size: 12px; color: var(--text-tertiary); margin-top: 3px; }
+
+    /* Zone sections */
+    .zone-section { margin-bottom: 12px; }
+    .zone-section:last-child { margin-bottom: 0; }
+    .zone-label {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; margin-bottom: 7px;
+    }
+    .zone-label.s { color: var(--red); }
+    .zone-label.r { color: var(--blue); }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+    /* Column headers */
+    .col-headers {
+      display: grid; gap: 4px; padding: 0 8px; margin-bottom: 4px;
+    }
+    .col-headers.support-grid { grid-template-columns: 30px 1fr 1fr 1fr; }
+    .col-headers.resist-grid  { grid-template-columns: 30px 1fr 1fr; }
+    .col-head {
+      font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+      text-align: center;
+    }
+    .col-head:first-child { text-align: left; }
+
+    /* Level rows */
+    .level-row {
+      display: grid; gap: 4px; border-radius: 9px;
+      padding: 10px 8px; margin-bottom: 5px; align-items: center;
+    }
+    .level-row:last-child { margin-bottom: 0; }
+    .level-row.support-grid { grid-template-columns: 30px 1fr 1fr 1fr; background: var(--red-bg); }
+    .level-row.resist-grid  { grid-template-columns: 30px 1fr 1fr; background: var(--blue-bg); }
+    .level-tag {
+      font-size: 12px; font-weight: 700;
+    }
+    .level-row.support-grid .level-tag { color: var(--red); }
+    .level-row.resist-grid  .level-tag { color: var(--blue); }
+    .level-val {
+      font-size: 16px; font-weight: 600; text-align: center; letter-spacing: -0.2px;
+    }
+    .level-val.muted { color: var(--text-tertiary); font-size: 14px; }
+
+    /* Skeleton */
+    .skel {
+      background: linear-gradient(90deg,#ebebeb 25%,#f5f5f5 50%,#ebebeb 75%);
+      background-size: 800px 100%; animation: shimmer 1.3s infinite; border-radius: 6px;
+    }
     @keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
-    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 200; align-items: center; justify-content: center; }
+
+    /* Modal */
+    .overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 200; align-items: flex-end; justify-content: center;
+    }
     .overlay.open { display: flex; }
-    .modal { background: var(--surface); border-radius: 20px; padding: 36px; width: 500px; max-width: 92vw; box-shadow: 0 30px 80px rgba(0,0,0,0.2); }
-    .modal h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
-    .modal .msub { font-size: 13px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; }
-    .fg { margin-bottom: 16px; }
+    .modal {
+      background: var(--surface); border-radius: 20px 20px 0 0; padding: 28px 20px 36px;
+      width: 100%; max-width: 560px; box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
+    }
+    .modal-handle {
+      width: 36px; height: 4px; background: var(--border); border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+    .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 5px; }
+    .modal .msub { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5; }
+    .fg { margin-bottom: 14px; }
     .fg label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 6px; }
-    .fg input { width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.15s; }
+    .fg input {
+      width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+      padding: 11px 14px; font-size: 15px; font-family: inherit; outline: none;
+      transition: border-color 0.15s; -webkit-appearance: none;
+    }
     .fg input:focus { border-color: var(--accent); }
     .fg .hint { font-size: 11px; color: var(--text-tertiary); margin-top: 5px; line-height: 1.5; }
-    .col-map { font-size: 12px; color: var(--text-secondary); background: var(--bg); border-radius: 8px; padding: 10px 12px; margin-top: 8px; line-height: 1.8; }
-    .col-map b { color: var(--text-primary); }
-    .mbtns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
-    .btn-c { border: 1.5px solid var(--border); background: none; border-radius: 10px; padding: 9px 18px; font-size: 14px; cursor: pointer; font-family: inherit; }
-    .btn-c:hover { background: var(--bg); }
-    .btn-s { background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 9px 22px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
-    .btn-s:hover { opacity: 0.88; }
-    .placeholder-note { font-size: 12px; color: #f5a623; margin-left: auto; }
-    @media (max-width: 640px) {
-      .header-inner { padding: 0 18px; }
-      .main { padding: 20px 16px 40px; }
-      .grid { grid-template-columns: 1fr; }
+    .mbtns { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
+    .btn-s {
+      background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm);
+      padding: 14px 22px; font-size: 16px; font-weight: 600; cursor: pointer;
+      font-family: inherit; width: 100%; -webkit-tap-highlight-color: transparent;
     }
+    .btn-s:hover { opacity: 0.88; }
+    .btn-c {
+      border: 1.5px solid var(--border); background: none; border-radius: var(--radius-sm);
+      padding: 13px 18px; font-size: 15px; cursor: pointer; font-family: inherit; width: 100%;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-c:hover { background: var(--bg); }
+    .placeholder-note { font-size: 12px; color: #f5a623; margin-left: auto; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -144,7 +217,7 @@
     <div class="logo">Trade<span>watch</span></div>
     <div class="header-right">
       <span class="last-updated" id="lu"></span>
-      <span class="placeholder-note" id="phNote" style="display:none">⚠ Placeholder data</span>
+      <span class="placeholder-note" id="phNote" style="display:none">⚠ Placeholder</span>
       <button class="btn-refresh" id="rbtn" onclick="loadData()">
         <span class="spin" id="spin">↻</span> Refresh
       </button>
@@ -157,7 +230,7 @@
   <div class="status-bar">
     <div class="dot" id="dot"></div>
     <span id="smsg">Starting…</span>
-    <span id="dataDate" style="margin-left:auto; font-size:12px; color:var(--text-tertiary);"></span>
+    <span id="dataDate" style="margin-left:auto;font-size:12px;color:var(--text-tertiary);"></span>
   </div>
   <div class="section-label">Watchlist</div>
   <div class="grid" id="grid"></div>
@@ -165,31 +238,24 @@
 
 <div class="overlay" id="overlay" onclick="overlayClick(event)">
   <div class="modal">
+    <div class="modal-handle"></div>
     <h2>Data Source</h2>
-    <p class="msub">Paste your published Google Sheets CSV link. Go to <b>File → Share → Publish to web</b>, choose your sheet tab, select <b>CSV</b>, and copy the link.</p>
+    <p class="msub">Connected to your Google Apps Script. Tap Save to update the URL.</p>
     <div class="fg">
-      <label>Published CSV URL</label>
-      <input id="mi-csv" type="text" placeholder="https://docs.google.com/spreadsheets/d/e/…/pub?…&output=csv"/>
-      <div class="hint">Must end with <code>output=csv</code>. The sheet must be published, not just shared.</div>
-      <div class="col-map">
-        Expected column order:<br>
-        <b>A</b> No &nbsp;·&nbsp; <b>B</b> Ticker &nbsp;·&nbsp; <b>C</b> S1 &nbsp;·&nbsp; <b>D</b> S2 &nbsp;·&nbsp; <b>E</b> S3<br>
-        <b>F</b> R1 &nbsp;·&nbsp; <b>G</b> R2 &nbsp;·&nbsp; <b>H</b> R3 &nbsp;·&nbsp; <b>I</b> Prev Price &nbsp;·&nbsp; <b>J</b> Last Price &nbsp;·&nbsp; <b>K</b> % Change
-      </div>
+      <label>Apps Script URL</label>
+      <input id="mi-url" type="url" placeholder="https://script.google.com/macros/s/…/exec"/>
+      <div class="hint">Redeploy your script and paste the new URL here if it changes.</div>
     </div>
     <div class="mbtns">
-      <button class="btn-c" onclick="closeModal()">Cancel</button>
       <button class="btn-s" onclick="saveModal()">Save & Reload</button>
+      <button class="btn-c" onclick="closeModal()">Cancel</button>
     </div>
   </div>
 </div>
 
 <script>
-// Published CSV URL kept as fallback reference (not used — Apps Script is primary)
-// const D_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1v.../pub?output=csv";
+const D_URL = "https://script.google.com/macros/s/AKfycbxUcwywAXYIQExhJ4RU3jObdJdoaFH8bYhc5-n9p1FiYQdK4ZDDS-8swhvEOzXYBzRj/exec";
 
-// Placeholder — shown if sheet is unreachable
-// Cols: No, Ticker, S1, S2, S3, R1, R2, R3, PrevPrice, LastPrice, Change%
 const PH = [
   {no:1,  tk:"BULL", s1:340, s2:320, s3:300, r1:390, r2:416, r3:480, prevPrice:368, price:344,  change:-6.98},
   {no:2,  tk:"IRSX", s1:426, s2:400, s3:370, r1:450, r2:480, r3:505, prevPrice:438, price:418,  change:-4.78},
@@ -205,120 +271,87 @@ const PH = [
 
 // Config
 let cfg = (() => {
-  try { const s = localStorage.getItem("tw5"); return s ? JSON.parse(s) : {}; }
+  try { const s = localStorage.getItem("tw6"); return s ? JSON.parse(s) : {}; }
   catch { return {}; }
 })();
-const saveCfg = () => { try { localStorage.setItem("tw5", JSON.stringify(cfg)); } catch {} };
+const saveCfg = () => { try { localStorage.setItem("tw6", JSON.stringify(cfg)); } catch {} };
 
-// Fetch directly from Google Apps Script — no proxy needed, always fresh
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxUcwywAXYIQExhJ4RU3jObdJdoaFH8bYhc5-n9p1FiYQdK4ZDDS-8swhvEOzXYBzRj/exec";
+// Gap rule based on the level's own price
+function gap(price) {
+  if (price < 200)  return 2;
+  if (price < 500)  return 4;
+  if (price < 2000) return 10;
+  if (price < 5000) return 20;
+  return 50;
+}
 
+// Fetch from Apps Script
 async function fetchSheet() {
-  const r = await fetch(APPS_SCRIPT_URL);
+  const url = cfg.scriptUrl || D_URL;
+  const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 12000));
+  const r = await Promise.race([fetch(url), timeout]);
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   const json = await r.json();
-  if (json.status !== "ok") throw new Error("Script returned error");
-  if (!json.data?.length) throw new Error("No data returned");
+  if (json.status !== "ok") throw new Error("Script error");
+  if (!json.data?.length) throw new Error("No data");
 
-  // Show last updated date from Sheet2
-  if (json.lastUpdated) {
-    $("dataDate").textContent = `Data as of ${json.lastUpdated}`;
-  }
+  if (json.lastUpdated) $("dataDate").textContent = `Data as of ${json.lastUpdated}`;
 
   return json.data.map((row, i) => {
-    const num = v => {
-      const s = String(v ?? "").replace(/[%,\s]/g, "").trim();
-      const n = parseFloat(s);
-      return isNaN(n) ? null : n;
-    };
+    const num = v => { const n = parseFloat(String(v ?? "").replace(/[%,\s]/g, "")); return isNaN(n) ? null : n; };
     const rawChange = num(row.change);
-    const change = rawChange !== null
-      ? (Math.abs(rawChange) <= 1 ? rawChange * 100 : rawChange)
-      : null;
+    const change = rawChange !== null ? (Math.abs(rawChange) <= 1 ? rawChange * 100 : rawChange) : null;
     return {
-      no:        row.no ?? i + 1,
-      tk:        String(row.ticker || "").trim().toUpperCase(),
-      s1:        num(row.s1),
-      s2:        num(row.s2),
-      s3:        num(row.s3),
-      r1:        num(row.r1),
-      r2:        num(row.r2),
-      r3:        num(row.r3),
+      no: row.no ?? i+1,
+      tk: String(row.ticker||"").trim().toUpperCase(),
+      s1: num(row.s1), s2: num(row.s2), s3: num(row.s3),
+      r1: num(row.r1), r2: num(row.r2), r3: num(row.r3),
       prevPrice: num(row.prevPrice),
-      price:     num(row.price),
+      price: num(row.price),
       change,
     };
   }).filter(r => r.tk);
 }
 
-// CSV parser
-// Sheet columns: A(0)=No, B(1)=Ticker, C(2)=S1, D(3)=S2, E(4)=S3,
-//                F(5)=R1, G(6)=R2, H(7)=R3, I(8)=PrevPrice, J(9)=LastPrice, K(10)=Change%
-function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/);
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const cols = splitCSVLine(lines[i]);
-    if (!cols.length) continue;
-    const tk = String(cols[1] || "").replace(/^"|"$/g, "").trim().toUpperCase();
-    if (!tk) continue;
+// Format number in Indonesian locale
+const fmt = n => (n != null && !isNaN(n)) ? parseFloat(n).toLocaleString("id-ID") : null;
 
-    const num = v => {
-      // Strip quotes, currency symbols, % signs, commas
-      const s = String(v || "").replace(/^"|"$/g, "").replace(/[%,\s]/g, "").trim();
-      const n = parseFloat(s);
-      return isNaN(n) ? null : n;
-    };
-
-    // % Change: sheet stores as e.g. "-6.98%" or "-0.0698" (GOOGLEFINANCE decimal)
-    // Normalise: if absolute value <= 1, it's a decimal → ×100
-    const rawChange = num(cols[10]);
-    const change = rawChange !== null
-      ? (Math.abs(rawChange) <= 1 ? rawChange * 100 : rawChange)
-      : null;
-
-    rows.push({
-      no: num(cols[0]) ?? i, tk,
-      s1: num(cols[2]), s2: num(cols[3]), s3: num(cols[4]),
-      r1: num(cols[5]), r2: num(cols[6]), r3: num(cols[7]),
-      prevPrice: num(cols[8]),
-      price:     num(cols[9]),
-      change,
-    });
-  }
-  return rows;
+// Render a support row: Price | Stop Loss | Re-Entry
+// SL = level price - gap(level), Re-Entry = next level + gap(next level)
+function supportRow(tag, levelPrice, nextPrice) {
+  const f = fmt(levelPrice);
+  if (!f) return "";
+  const sl = levelPrice != null ? levelPrice - gap(levelPrice) : null;
+  const re = nextPrice  != null ? nextPrice  + gap(nextPrice)  : null;
+  return `
+    <div class="level-row support-grid">
+      <span class="level-tag">${tag}</span>
+      <span class="level-val">${fmt(levelPrice) ?? "—"}</span>
+      <span class="level-val">${fmt(sl) ?? "—"}</span>
+      <span class="level-val ${re == null ? "muted" : ""}">${fmt(re) ?? "N/A"}</span>
+    </div>`;
 }
 
-function splitCSVLine(line) {
-  const result = []; let cur = "", inQ = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') { if (inQ && line[i+1]==='"') { cur+='"'; i++; } else inQ=!inQ; }
-    else if (ch===',' && !inQ) { result.push(cur); cur=""; }
-    else cur+=ch;
-  }
-  result.push(cur);
-  return result;
+// Render a resistance row: Price | Entry
+// Entry = level price + gap(level)
+function resistRow(tag, levelPrice) {
+  if (levelPrice == null) return "";
+  const entry = levelPrice + gap(levelPrice);
+  return `
+    <div class="level-row resist-grid">
+      <span class="level-tag">${tag}</span>
+      <span class="level-val">${fmt(levelPrice) ?? "—"}</span>
+      <span class="level-val">${fmt(entry) ?? "—"}</span>
+    </div>`;
 }
-
-// Render
-const fmtN = n => (n !== null && !isNaN(parseFloat(n))) ? parseFloat(n).toLocaleString("id-ID") : null;
 
 function card(s) {
   const cn  = parseFloat(s.change);
   const dir = isNaN(cn) ? "flat" : cn > 0 ? "up" : cn < 0 ? "down" : "flat";
   const arr = dir==="up" ? "▲" : dir==="down" ? "▼" : "–";
   const sig = dir==="up" ? "+" : "";
-  const top = dir==="up" ? "var(--green)" : dir==="down" ? "var(--red)" : "var(--border)";
-
-  const lvl = (val, tag) => {
-    const n = fmtN(val);
-    return n ? `<div class="level"><span class="ldot"></span><span>${n}</span><span class="ltag">${tag}</span></div>` : "";
-  };
-
-  const prevHtml = s.prevPrice != null
-    ? `<div class="prev-price">Prev ${parseFloat(s.prevPrice).toLocaleString("id-ID")}</div>`
-    : "";
+  const top = dir==="up" ? "#1a9e5c" : dir==="down" ? "var(--red)" : "var(--border)";
+  const priceStr = s.price != null ? parseFloat(s.price).toLocaleString("id-ID") : "—";
 
   return `
   <div class="card" style="--card-top:${top}">
@@ -328,41 +361,58 @@ function card(s) {
         <div class="ticker">${s.tk}</div>
       </div>
       <div class="price-wrap">
-        <div class="price">${s.price != null ? parseFloat(s.price).toLocaleString("id-ID") : "—"}</div>
-        ${prevHtml}
-        <div class="badge ${dir}">${arr} ${!isNaN(cn) ? sig+cn.toFixed(2)+"%" : "—"}</div>
+        <div class="price-row">
+          <div class="badge ${dir}">${arr} ${!isNaN(cn) ? sig+cn.toFixed(2)+"%" : "—"}</div>
+          <div class="price">${priceStr}</div>
+        </div>
+        ${s.prevPrice != null ? `<div class="prev-price">Prev ${parseFloat(s.prevPrice).toLocaleString("id-ID")}</div>` : ""}
       </div>
     </div>
-    <div class="zones">
-      <div class="zone s">
-        <div class="zone-title">Support</div>
-        ${lvl(s.s1,"S1")}${lvl(s.s2,"S2")}${lvl(s.s3,"S3")}
+
+    <div class="zone-section">
+      <div class="zone-label s">Support</div>
+      <div class="col-headers support-grid">
+        <div class="col-head"></div>
+        <div class="col-head">Price</div>
+        <div class="col-head">Stop Loss</div>
+        <div class="col-head">Re-Entry</div>
       </div>
-      <div class="zone r">
-        <div class="zone-title">Resistance</div>
-        ${lvl(s.r1,"R1")}${lvl(s.r2,"R2")}${lvl(s.r3,"R3")}
+      ${supportRow("S1", s.s1, s.s2)}
+      ${supportRow("S2", s.s2, s.s3)}
+      ${supportRow("S3", s.s3, null)}
+    </div>
+
+    <hr class="divider">
+
+    <div class="zone-section">
+      <div class="zone-label r">Resistance</div>
+      <div class="col-headers resist-grid">
+        <div class="col-head"></div>
+        <div class="col-head">Price</div>
+        <div class="col-head">Entry</div>
       </div>
+      ${resistRow("R1", s.r1)}
+      ${resistRow("R2", s.r2)}
+      ${resistRow("R3", s.r3)}
     </div>
   </div>`;
 }
 
-function skeletons(n=6) {
+function skeletons(n=4) {
   document.getElementById("grid").innerHTML = Array.from({length:n}).map(()=>`
     <div class="card">
       <div style="display:flex;justify-content:space-between;margin-bottom:16px">
-        <div style="display:flex;gap:9px;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center">
           <div class="skel" style="width:22px;height:22px;border-radius:6px"></div>
-          <div class="skel" style="width:70px;height:21px"></div>
+          <div class="skel" style="width:72px;height:24px"></div>
         </div>
         <div style="text-align:right">
-          <div class="skel" style="width:62px;height:20px;margin-bottom:6px"></div>
-          <div class="skel" style="width:52px;height:18px;border-radius:20px"></div>
+          <div class="skel" style="width:80px;height:24px;margin-bottom:5px"></div>
+          <div class="skel" style="width:55px;height:14px"></div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="skel" style="height:80px;border-radius:10px"></div>
-        <div class="skel" style="height:80px;border-radius:10px"></div>
-      </div>
+      <div class="skel" style="height:120px;border-radius:10px;margin-bottom:10px"></div>
+      <div class="skel" style="height:90px;border-radius:10px"></div>
     </div>`).join("");
 }
 
@@ -379,18 +429,17 @@ async function loadData() {
   let rows, usedPH = false;
   try {
     rows = await fetchSheet();
-    if (!rows.length) throw new Error("No data rows — check column order in sheet");
+    if (!rows.length) throw new Error("No data rows");
   } catch(e) {
     console.warn("Sheet failed:", e.message);
     rows = PH; usedPH = true;
-    setStatus("error", `Sheet unavailable — showing placeholder data (${e.message})`);
+    setStatus("error", `Sheet unavailable — showing placeholder (${e.message})`);
     $("phNote").style.display = "block";
   }
 
   $("grid").innerHTML = rows.map(r => card(r)).join("");
   const now = new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
   $("lu").textContent = `Updated ${now}`;
-
   if (!usedPH) {
     const withPrice = rows.filter(r => r.price != null).length;
     setStatus("success", `${rows.length} stocks · ${withPrice} with live price`);
@@ -399,14 +448,14 @@ async function loadData() {
 }
 
 function openModal() {
-  $("mi-csv").value = cfg.csvUrl || D_CSV;
+  $("mi-url").value = cfg.scriptUrl || D_URL;
   $("overlay").classList.add("open");
 }
 function closeModal() { $("overlay").classList.remove("open"); }
 function overlayClick(e) { if (e.target.id==="overlay") closeModal(); }
 function saveModal() {
-  const v = $("mi-csv").value.trim();
-  cfg = { csvUrl: v || D_CSV };
+  const v = $("mi-url").value.trim();
+  cfg = { scriptUrl: v || D_URL };
   saveCfg(); closeModal(); loadData();
 }
 
