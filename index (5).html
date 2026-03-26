@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tradewatch</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --border: #e2e2e7;
+      --text-primary: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --text-tertiary: #aeaeb2;
+      --accent: #0071e3;
+      --green: #1a9e5c;
+      --green-bg: #eaf6f0;
+      --red: #d93025;
+      --red-bg: #fdf0ef;
+      --neutral-bg: #f0f0f5;
+      --radius: 18px;
+      --radius-sm: 10px;
+      --shadow: 0 1px 8px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.04);
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+      background: var(--bg); color: var(--text-primary); min-height: 100vh;
+    }
+    header {
+      background: rgba(255,255,255,0.82);
+      backdrop-filter: saturate(180%) blur(24px);
+      -webkit-backdrop-filter: saturate(180%) blur(24px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-inner {
+      max-width: 1280px; margin: 0 auto; height: 58px; padding: 0 36px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+    .logo span { color: var(--accent); }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .last-updated { font-size: 12px; color: var(--text-tertiary); }
+    .btn-refresh {
+      background: none; border: 1px solid var(--border); border-radius: 20px;
+      padding: 6px 16px; font-size: 13px; color: var(--accent); cursor: pointer;
+      display: flex; align-items: center; gap: 6px; transition: background 0.15s;
+    }
+    .btn-refresh:hover { background: #eaf2fd; }
+    .btn-refresh:disabled { opacity: 0.5; cursor: default; }
+    .spin { display: inline-block; }
+    .spinning { animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-icon {
+      background: none; border: 1px solid var(--border); border-radius: 50%;
+      width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+      font-size: 15px; cursor: pointer; color: var(--text-secondary); transition: background 0.15s;
+    }
+    .btn-icon:hover { background: var(--neutral-bg); color: var(--text-primary); }
+    .main { max-width: 1280px; margin: 0 auto; padding: 28px 36px 60px; }
+    .status-bar {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 24px;
+      padding: 9px 16px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); font-size: 13px; color: var(--text-secondary);
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--text-tertiary); }
+    .dot.loading { background: #f5a623; animation: pulse 1s infinite; }
+    .dot.success { background: var(--green); }
+    .dot.error   { background: var(--red); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+    .section-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 14px;
+    }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 22px 22px 20px;
+      box-shadow: var(--shadow); position: relative; overflow: hidden;
+      transition: box-shadow 0.2s, transform 0.18s;
+    }
+    .card::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--card-top, transparent);
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.11); transform: translateY(-2px); }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .ticker-wrap { display: flex; align-items: center; gap: 9px; }
+    .num { width: 22px; height: 22px; border-radius: 6px; background: var(--neutral-bg); font-size: 10px; font-weight: 700; color: var(--text-tertiary); display: flex; align-items: center; justify-content: center; }
+    .ticker { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+    .price-wrap { text-align: right; }
+    .price { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+    .badge { display: inline-flex; align-items: center; gap: 3px; margin-top: 4px; padding: 3px 9px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge.up   { background: var(--green-bg); color: var(--green); }
+    .badge.down { background: var(--red-bg); color: var(--red); }
+    .badge.flat { background: var(--neutral-bg); color: var(--text-secondary); }
+    .zones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .zone { border-radius: var(--radius-sm); padding: 11px 13px; }
+    .zone.s { background: var(--green-bg); }
+    .zone.r { background: var(--red-bg); }
+    .zone-title { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 7px; }
+    .zone.s .zone-title { color: var(--green); }
+    .zone.r .zone-title { color: var(--red); }
+    .level { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; font-size: 13px; font-weight: 500; }
+    .level:last-child { margin-bottom: 0; }
+    .ldot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+    .zone.s .ldot { background: var(--green); }
+    .zone.r .ldot { background: var(--red); }
+    .ltag { font-size: 10px; color: var(--text-tertiary); font-weight: 500; }
+    .prev-price { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+    .skel { background: linear-gradient(90deg,#ebebeb 25%,#f3f3f3 50%,#ebebeb 75%); background-size: 800px 100%; animation: shimmer 1.3s infinite; border-radius: 6px; }
+    @keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 200; align-items: center; justify-content: center; }
+    .overlay.open { display: flex; }
+    .modal { background: var(--surface); border-radius: 20px; padding: 36px; width: 500px; max-width: 92vw; box-shadow: 0 30px 80px rgba(0,0,0,0.2); }
+    .modal h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    .modal .msub { font-size: 13px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; }
+    .fg { margin-bottom: 16px; }
+    .fg label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 6px; }
+    .fg input { width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.15s; }
+    .fg input:focus { border-color: var(--accent); }
+    .fg .hint { font-size: 11px; color: var(--text-tertiary); margin-top: 5px; line-height: 1.5; }
+    .col-map { font-size: 12px; color: var(--text-secondary); background: var(--bg); border-radius: 8px; padding: 10px 12px; margin-top: 8px; line-height: 1.8; }
+    .col-map b { color: var(--text-primary); }
+    .mbtns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+    .btn-c { border: 1.5px solid var(--border); background: none; border-radius: 10px; padding: 9px 18px; font-size: 14px; cursor: pointer; font-family: inherit; }
+    .btn-c:hover { background: var(--bg); }
+    .btn-s { background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 9px 22px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-s:hover { opacity: 0.88; }
+    .placeholder-note { font-size: 12px; color: #f5a623; margin-left: auto; }
+    @media (max-width: 640px) {
+      .header-inner { padding: 0 18px; }
+      .main { padding: 20px 16px 40px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">Trade<span>watch</span></div>
+    <div class="header-right">
+      <span class="last-updated" id="lu"></span>
+      <span class="placeholder-note" id="phNote" style="display:none">⚠ Placeholder data</span>
+      <button class="btn-refresh" id="rbtn" onclick="loadData()">
+        <span class="spin" id="spin">↻</span> Refresh
+      </button>
+      <button class="btn-icon" title="Settings" onclick="openModal()">⚙</button>
+    </div>
+  </div>
+</header>
+
+<div class="main">
+  <div class="status-bar"><div class="dot" id="dot"></div><span id="smsg">Starting…</span></div>
+  <div class="section-label">Watchlist</div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="modal">
+    <h2>Data Source</h2>
+    <p class="msub">Paste your published Google Sheets CSV link. Go to <b>File → Share → Publish to web</b>, choose your sheet tab, select <b>CSV</b>, and copy the link.</p>
+    <div class="fg">
+      <label>Published CSV URL</label>
+      <input id="mi-csv" type="text" placeholder="https://docs.google.com/spreadsheets/d/e/…/pub?…&output=csv"/>
+      <div class="hint">Must end with <code>output=csv</code>. The sheet must be published, not just shared.</div>
+      <div class="col-map">
+        Expected column order:<br>
+        <b>A</b> No &nbsp;·&nbsp; <b>B</b> Ticker &nbsp;·&nbsp; <b>C</b> S1 &nbsp;·&nbsp; <b>D</b> S2 &nbsp;·&nbsp; <b>E</b> S3<br>
+        <b>F</b> R1 &nbsp;·&nbsp; <b>G</b> R2 &nbsp;·&nbsp; <b>H</b> R3 &nbsp;·&nbsp; <b>I</b> Prev Price &nbsp;·&nbsp; <b>J</b> Last Price &nbsp;·&nbsp; <b>K</b> % Change
+      </div>
+    </div>
+    <div class="mbtns">
+      <button class="btn-c" onclick="closeModal()">Cancel</button>
+      <button class="btn-s" onclick="saveModal()">Save & Reload</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Direct published CSV URL from Google Sheets ───────
+const D_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTGGq5EibM0_CgZPcux37EwoHEMV650Cx3DyNeWX4vChBX612Wm5lDeXDNrdQMYAZZG-lOEU1Icb8Fu/pub?gid=0&single=true&output=csv";
+
+// Placeholder — shown if sheet is unreachable
+// Cols: No, Ticker, S1, S2, S3, R1, R2, R3, PrevPrice, LastPrice, Change%
+const PH = [
+  {no:1,  tk:"BULL", s1:340, s2:320, s3:300, r1:390, r2:416, r3:480, prevPrice:368, price:344,  change:-6.98},
+  {no:2,  tk:"IRSX", s1:426, s2:400, s3:370, r1:450, r2:480, r3:505, prevPrice:438, price:418,  change:-4.78},
+  {no:3,  tk:"BUMI", s1:214, s2:200, s3:188, r1:230, r2:240, r3:260, prevPrice:226, price:214,  change:-5.61},
+  {no:4,  tk:"BEEF", s1:258, s2:240, s3:220, r1:280, r2:300, r3:330, prevPrice:270, price:274,  change:1.46},
+  {no:5,  tk:"DEWA", s1:446, s2:420, s3:400, r1:470, r2:500, r3:540, prevPrice:460, price:440,  change:-4.55},
+  {no:6,  tk:"INET", s1:260, s2:250, s3:230, r1:290, r2:310, r3:340, prevPrice:274, price:262,  change:-4.58},
+  {no:7,  tk:"TOBA", s1:560, s2:520, s3:500, r1:600, r2:630, r3:680, prevPrice:580, price:560,  change:-3.57},
+  {no:8,  tk:"BIPI", s1:208, s2:190, s3:176, r1:230, r2:250, r3:276, prevPrice:214, price:199,  change:-7.54},
+  {no:9,  tk:"KEEN", s1:880, s2:850, s3:820, r1:920, r2:950, r3:1000,prevPrice:895, price:875,  change:-2.29},
+  {no:10, tk:"MINA", s1:248, s2:240, s3:226, r1:276, r2:300, r3:320, prevPrice:268, price:248,  change:-8.06},
+];
+
+// Config — stores any custom CSV URL the user sets via settings modal
+let cfg = (() => {
+  try { const s = localStorage.getItem("tw5"); return s ? JSON.parse(s) : {csvUrl: D_CSV}; }
+  catch { return {csvUrl: D_CSV}; }
+})();
+const saveCfg = () => { try { localStorage.setItem("tw5", JSON.stringify(cfg)); } catch {} };
+
+// Fetch with timeout using Promise.race — no AbortSignal needed
+function fetchWithTimeout(url, ms = 10000) {
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error("Request timed out")), ms)
+  );
+  return Promise.race([fetch(url), timeout]);
+}
+
+// Fetch sheet — CORS proxies only (direct fetch blocked by browser CORS policy)
+async function fetchSheet() {
+  const csvUrl = cfg.csvUrl || D_CSV;
+  const urls = [
+    `https://corsproxy.io/?${encodeURIComponent(csvUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(csvUrl)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(csvUrl)}`,
+  ];
+  let lastErr;
+  for (const url of urls) {
+    try {
+      console.log("Trying:", url.split("?")[0]);
+      const r = await fetchWithTimeout(url, 12000);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const text = await r.text();
+      if (!text || text.trim().length < 5) throw new Error("Empty response");
+      // Make sure we got CSV and not an error page
+      if (text.trim().startsWith("<")) throw new Error("Got HTML instead of CSV");
+      console.log("Success! First line:", text.split("\n")[0]);
+      return parseCSV(text);
+    } catch(e) {
+      console.warn("Proxy failed:", e.message);
+      lastErr = e;
+    }
+  }
+  throw new Error(lastErr?.message || "All proxies failed");
+}
+
+// CSV parser
+// Sheet columns: A(0)=No, B(1)=Ticker, C(2)=S1, D(3)=S2, E(4)=S3,
+//                F(5)=R1, G(6)=R2, H(7)=R3, I(8)=PrevPrice, J(9)=LastPrice, K(10)=Change%
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = splitCSVLine(lines[i]);
+    if (!cols.length) continue;
+    const tk = String(cols[1] || "").replace(/^"|"$/g, "").trim().toUpperCase();
+    if (!tk) continue;
+
+    const num = v => {
+      // Strip quotes, currency symbols, % signs, commas
+      const s = String(v || "").replace(/^"|"$/g, "").replace(/[%,\s]/g, "").trim();
+      const n = parseFloat(s);
+      return isNaN(n) ? null : n;
+    };
+
+    // % Change: sheet stores as e.g. "-6.98%" or "-0.0698" (GOOGLEFINANCE decimal)
+    // Normalise: if absolute value <= 1, it's a decimal → ×100
+    const rawChange = num(cols[10]);
+    const change = rawChange !== null
+      ? (Math.abs(rawChange) <= 1 ? rawChange * 100 : rawChange)
+      : null;
+
+    rows.push({
+      no: num(cols[0]) ?? i, tk,
+      s1: num(cols[2]), s2: num(cols[3]), s3: num(cols[4]),
+      r1: num(cols[5]), r2: num(cols[6]), r3: num(cols[7]),
+      prevPrice: num(cols[8]),
+      price:     num(cols[9]),
+      change,
+    });
+  }
+  return rows;
+}
+
+function splitCSVLine(line) {
+  const result = []; let cur = "", inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { if (inQ && line[i+1]==='"') { cur+='"'; i++; } else inQ=!inQ; }
+    else if (ch===',' && !inQ) { result.push(cur); cur=""; }
+    else cur+=ch;
+  }
+  result.push(cur);
+  return result;
+}
+
+// Render
+const fmtN = n => (n !== null && !isNaN(parseFloat(n))) ? parseFloat(n).toLocaleString("id-ID") : null;
+
+function card(s) {
+  const cn  = parseFloat(s.change);
+  const dir = isNaN(cn) ? "flat" : cn > 0 ? "up" : cn < 0 ? "down" : "flat";
+  const arr = dir==="up" ? "▲" : dir==="down" ? "▼" : "–";
+  const sig = dir==="up" ? "+" : "";
+  const top = dir==="up" ? "var(--green)" : dir==="down" ? "var(--red)" : "var(--border)";
+
+  const lvl = (val, tag) => {
+    const n = fmtN(val);
+    return n ? `<div class="level"><span class="ldot"></span><span>${n}</span><span class="ltag">${tag}</span></div>` : "";
+  };
+
+  const prevHtml = s.prevPrice != null
+    ? `<div class="prev-price">Prev ${parseFloat(s.prevPrice).toLocaleString("id-ID")}</div>`
+    : "";
+
+  return `
+  <div class="card" style="--card-top:${top}">
+    <div class="card-top">
+      <div class="ticker-wrap">
+        <div class="num">${s.no}</div>
+        <div class="ticker">${s.tk}</div>
+      </div>
+      <div class="price-wrap">
+        <div class="price">${s.price != null ? parseFloat(s.price).toLocaleString("id-ID") : "—"}</div>
+        ${prevHtml}
+        <div class="badge ${dir}">${arr} ${!isNaN(cn) ? sig+cn.toFixed(2)+"%" : "—"}</div>
+      </div>
+    </div>
+    <div class="zones">
+      <div class="zone s">
+        <div class="zone-title">Support</div>
+        ${lvl(s.s1,"S1")}${lvl(s.s2,"S2")}${lvl(s.s3,"S3")}
+      </div>
+      <div class="zone r">
+        <div class="zone-title">Resistance</div>
+        ${lvl(s.r1,"R1")}${lvl(s.r2,"R2")}${lvl(s.r3,"R3")}
+      </div>
+    </div>
+  </div>`;
+}
+
+function skeletons(n=6) {
+  document.getElementById("grid").innerHTML = Array.from({length:n}).map(()=>`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;margin-bottom:16px">
+        <div style="display:flex;gap:9px;align-items:center">
+          <div class="skel" style="width:22px;height:22px;border-radius:6px"></div>
+          <div class="skel" style="width:70px;height:21px"></div>
+        </div>
+        <div style="text-align:right">
+          <div class="skel" style="width:62px;height:20px;margin-bottom:6px"></div>
+          <div class="skel" style="width:52px;height:18px;border-radius:20px"></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="skel" style="height:80px;border-radius:10px"></div>
+        <div class="skel" style="height:80px;border-radius:10px"></div>
+      </div>
+    </div>`).join("");
+}
+
+const $ = id => document.getElementById(id);
+const setStatus  = (st, msg) => { $("dot").className=`dot ${st}`; $("smsg").textContent=msg; };
+const setLoading = on => { $("spin").classList.toggle("spinning",on); $("rbtn").disabled=on; };
+
+async function loadData() {
+  setLoading(true);
+  setStatus("loading", "Loading from Google Sheets…");
+  skeletons();
+  $("phNote").style.display = "none";
+
+  let rows, usedPH = false;
+  try {
+    rows = await fetchSheet();
+    if (!rows.length) throw new Error("No data rows — check column order in sheet");
+  } catch(e) {
+    console.warn("Sheet failed:", e.message);
+    rows = PH; usedPH = true;
+    setStatus("error", `Sheet unavailable — showing placeholder data (${e.message})`);
+    $("phNote").style.display = "block";
+  }
+
+  $("grid").innerHTML = rows.map(r => card(r)).join("");
+  const now = new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+  $("lu").textContent = `Updated ${now}`;
+
+  if (!usedPH) {
+    const withPrice = rows.filter(r => r.price != null).length;
+    setStatus("success", `${rows.length} stocks · ${withPrice} with live price`);
+  }
+  setLoading(false);
+}
+
+function openModal() {
+  $("mi-csv").value = cfg.csvUrl || D_CSV;
+  $("overlay").classList.add("open");
+}
+function closeModal() { $("overlay").classList.remove("open"); }
+function overlayClick(e) { if (e.target.id==="overlay") closeModal(); }
+function saveModal() {
+  const v = $("mi-csv").value.trim();
+  cfg = { csvUrl: v || D_CSV };
+  saveCfg(); closeModal(); loadData();
+}
+
+loadData();
+</script>
+</body>
+</html>
