@@ -218,7 +218,6 @@ function fetchWithTimeout(url, ms = 10000) {
 async function fetchSheet() {
   const csvUrl = cfg.csvUrl || D_CSV;
   const urls = [
-    `https://corsproxy.io/?${encodeURIComponent(csvUrl)}`,
     `https://api.allorigins.win/raw?url=${encodeURIComponent(csvUrl)}`,
     `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(csvUrl)}`,
   ];
