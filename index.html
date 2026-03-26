@@ -225,11 +225,34 @@
     }
     .placeholder-note { font-size: 12px; color: #f5a623; margin-left: auto; white-space: nowrap; }
 
-    /* Hint text at bottom */
+    /* Hint text */
     .expand-hint {
       text-align: center; font-size: 12px; color: var(--text-tertiary);
       margin-top: 10px; margin-bottom: 4px; letter-spacing: 0.02em;
     }
+
+    /* Sort bar */
+    .sort-bar {
+      display: flex; align-items: center; gap: 6px;
+      margin-bottom: 12px; overflow-x: auto; padding-bottom: 2px;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
+    .sort-bar::-webkit-scrollbar { display: none; }
+    .sort-label {
+      font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      white-space: nowrap; flex-shrink: 0; margin-right: 2px;
+    }
+    .sort-btn {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 600;
+      color: var(--text-secondary); cursor: pointer; white-space: nowrap; flex-shrink: 0;
+      display: flex; align-items: center; gap: 4px;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      -webkit-tap-highlight-color: transparent; font-family: inherit;
+    }
+    .sort-btn:hover { background: var(--neutral-bg); }
+    .sort-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   </style>
 </head>
 <body>
@@ -255,6 +278,15 @@
     <span id="dataDate" style="margin-left:auto;font-size:12px;color:var(--text-tertiary);"></span>
   </div>
   <div class="section-label">Watchlist</div>
+  <div class="sort-bar">
+    <span class="sort-label">Sort</span>
+    <button class="sort-btn" id="sb-default" onclick="setSort('default')">Default</button>
+    <button class="sort-btn" id="sb-alpha"   onclick="setSort('alpha')">A–Z</button>
+    <button class="sort-btn" id="sb-change-desc" onclick="setSort('change-desc')">% ▲ High</button>
+    <button class="sort-btn" id="sb-change-asc"  onclick="setSort('change-asc')">% ▼ Low</button>
+    <button class="sort-btn" id="sb-price-desc"  onclick="setSort('price-desc')">Price ▲</button>
+    <button class="sort-btn" id="sb-price-asc"   onclick="setSort('price-asc')">Price ▼</button>
+  </div>
   <p class="expand-hint">Tap a card to see strategy details</p>
   <div class="grid" id="grid"></div>
 </div>
@@ -422,6 +454,51 @@ function toggleCard(id) {
   el.classList.toggle("open");
 }
 
+// ── Sort ──────────────────────────────────────────────
+let currentSort = "default";
+let currentRows = [];
+
+function setSort(mode) {
+  currentSort = mode;
+  // Update active button
+  ["default","alpha","change-desc","change-asc","price-desc","price-asc"].forEach(m => {
+    const btn = document.getElementById("sb-" + m);
+    if (btn) btn.classList.toggle("active", m === mode);
+  });
+  renderRows();
+}
+
+function sortedRows() {
+  const rows = [...currentRows];
+  switch (currentSort) {
+    case "alpha":
+      return rows.sort((a,b) => a.tk.localeCompare(b.tk));
+    case "change-desc":
+      return rows.sort((a,b) => (b.change ?? -Infinity) - (a.change ?? -Infinity));
+    case "change-asc":
+      return rows.sort((a,b) => (a.change ?? Infinity) - (b.change ?? Infinity));
+    case "price-desc":
+      return rows.sort((a,b) => (b.price ?? -Infinity) - (a.price ?? -Infinity));
+    case "price-asc":
+      return rows.sort((a,b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+    default:
+      return rows;
+  }
+}
+
+function renderRows() {
+  // Preserve open state
+  const openCards = new Set(
+    [...document.querySelectorAll(".card.open")].map(el => el.id)
+  );
+  $("grid").innerHTML = sortedRows().map(r => card(r)).join("");
+  // Re-apply open state
+  openCards.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add("open");
+  });
+}
+
 function skeletons(n=4) {
   document.getElementById("grid").innerHTML = Array.from({length:n}).map(()=>`
     <div class="card">
@@ -462,7 +539,8 @@ async function loadData() {
     $("phNote").style.display = "block";
   }
 
-  $("grid").innerHTML = rows.map(r => card(r)).join("");
+  currentRows = rows;
+  setSort(currentSort); // re-apply current sort and render
   const now = new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
   $("lu").textContent = `Updated ${now}`;
   if (!usedPH) {
