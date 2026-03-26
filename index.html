@@ -154,7 +154,11 @@
 </header>
 
 <div class="main">
-  <div class="status-bar"><div class="dot" id="dot"></div><span id="smsg">Starting…</span></div>
+  <div class="status-bar">
+    <div class="dot" id="dot"></div>
+    <span id="smsg">Starting…</span>
+    <span id="dataDate" style="margin-left:auto; font-size:12px; color:var(--text-tertiary);"></span>
+  </div>
   <div class="section-label">Watchlist</div>
   <div class="grid" id="grid"></div>
 </div>
@@ -210,12 +214,17 @@ const saveCfg = () => { try { localStorage.setItem("tw5", JSON.stringify(cfg)); 
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxUcwywAXYIQExhJ4RU3jObdJdoaFH8bYhc5-n9p1FiYQdK4ZDDS-8swhvEOzXYBzRj/exec";
 
 async function fetchSheet() {
-  const url = APPS_SCRIPT_URL;
-  const r = await fetch(url);
+  const r = await fetch(APPS_SCRIPT_URL);
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   const json = await r.json();
   if (json.status !== "ok") throw new Error("Script returned error");
   if (!json.data?.length) throw new Error("No data returned");
+
+  // Show last updated date from Sheet2
+  if (json.lastUpdated) {
+    $("dataDate").textContent = `Data as of ${json.lastUpdated}`;
+  }
+
   return json.data.map((row, i) => {
     const num = v => {
       const s = String(v ?? "").replace(/[%,\s]/g, "").trim();
