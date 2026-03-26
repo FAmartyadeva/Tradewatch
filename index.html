@@ -88,8 +88,9 @@
     /* Card */
     .card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 16px 14px 14px;
-      box-shadow: var(--shadow); position: relative; overflow: hidden;
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      position: relative; overflow: hidden;
+      transition: box-shadow 0.2s;
     }
     .card::before {
       content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
@@ -97,11 +98,13 @@
       border-radius: var(--radius) var(--radius) 0 0;
     }
 
-    /* Card header */
-    .card-top {
-      display: flex; justify-content: space-between; align-items: flex-start;
-      margin-bottom: 16px;
+    /* Card summary — always visible, tappable */
+    .card-summary {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 14px; cursor: pointer; user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
+    .card-summary:active { background: var(--neutral-bg); }
     .ticker-wrap { display: flex; align-items: center; gap: 8px; }
     .num {
       width: 22px; height: 22px; border-radius: 6px; background: var(--neutral-bg);
@@ -109,8 +112,10 @@
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     .ticker { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
-    .price-wrap { text-align: right; }
+    .summary-right { display: flex; align-items: center; gap: 10px; }
+    .price-block { text-align: right; }
     .price-row { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+    .price { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
     .badge {
       display: inline-flex; align-items: center; gap: 3px;
       padding: 3px 9px; border-radius: 20px; font-size: 12px; font-weight: 600;
@@ -118,30 +123,46 @@
     .badge.up   { background: #eaf6f0; color: #1a9e5c; }
     .badge.down { background: var(--red-bg); color: var(--red); }
     .badge.flat { background: var(--neutral-bg); color: var(--text-secondary); }
-    .price { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
     .prev-price { font-size: 12px; color: var(--text-tertiary); margin-top: 3px; }
 
+    /* Chevron */
+    .chevron {
+      width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+      color: var(--text-tertiary); flex-shrink: 0; transition: transform 0.3s ease;
+      font-size: 13px;
+    }
+    .card.open .chevron { transform: rotate(180deg); }
+
+    /* Expandable detail */
+    .card-detail {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.35s ease, opacity 0.25s ease;
+      opacity: 0;
+    }
+    .card.open .card-detail {
+      max-height: 800px;
+      opacity: 1;
+    }
+    .card-detail-inner {
+      padding: 0 14px 16px;
+      border-top: 1px solid var(--border);
+    }
+
     /* Zone sections */
-    .zone-section { margin-bottom: 12px; }
-    .zone-section:last-child { margin-bottom: 0; }
+    .zone-section { margin-top: 12px; }
     .zone-label {
       font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
       text-transform: uppercase; margin-bottom: 7px;
     }
     .zone-label.s { color: var(--red); }
     .zone-label.r { color: var(--blue); }
-    .divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 12px 0 0; }
 
     /* Column headers */
-    .col-headers {
-      display: grid; gap: 4px; padding: 0 8px; margin-bottom: 4px;
-    }
+    .col-headers { display: grid; gap: 4px; padding: 0 8px; margin-bottom: 4px; }
     .col-headers.support-grid { grid-template-columns: 30px 1fr 1fr 1fr; }
     .col-headers.resist-grid  { grid-template-columns: 30px 1fr 1fr; }
-    .col-head {
-      font-size: 11px; font-weight: 600; color: var(--text-tertiary);
-      text-align: center;
-    }
+    .col-head { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-align: center; }
     .col-head:first-child { text-align: left; }
 
     /* Level rows */
@@ -152,14 +173,10 @@
     .level-row:last-child { margin-bottom: 0; }
     .level-row.support-grid { grid-template-columns: 30px 1fr 1fr 1fr; background: var(--red-bg); }
     .level-row.resist-grid  { grid-template-columns: 30px 1fr 1fr; background: var(--blue-bg); }
-    .level-tag {
-      font-size: 12px; font-weight: 700;
-    }
+    .level-tag { font-size: 12px; font-weight: 700; }
     .level-row.support-grid .level-tag { color: var(--red); }
     .level-row.resist-grid  .level-tag { color: var(--blue); }
-    .level-val {
-      font-size: 16px; font-weight: 600; text-align: center; letter-spacing: -0.2px;
-    }
+    .level-val { font-size: 16px; font-weight: 600; text-align: center; letter-spacing: -0.2px; }
     .level-val.muted { color: var(--text-tertiary); font-size: 14px; }
 
     /* Skeleton */
@@ -169,14 +186,14 @@
     }
     @keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
 
-    /* Modal */
+    /* Modal — bottom sheet on mobile */
     .overlay {
       display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
       z-index: 200; align-items: flex-end; justify-content: center;
     }
     .overlay.open { display: flex; }
     .modal {
-      background: var(--surface); border-radius: 20px 20px 0 0; padding: 28px 20px 36px;
+      background: var(--surface); border-radius: 20px 20px 0 0; padding: 28px 20px 40px;
       width: 100%; max-width: 560px; box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
     }
     .modal-handle {
@@ -197,17 +214,22 @@
     .mbtns { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
     .btn-s {
       background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm);
-      padding: 14px 22px; font-size: 16px; font-weight: 600; cursor: pointer;
+      padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;
       font-family: inherit; width: 100%; -webkit-tap-highlight-color: transparent;
     }
     .btn-s:hover { opacity: 0.88; }
     .btn-c {
       border: 1.5px solid var(--border); background: none; border-radius: var(--radius-sm);
-      padding: 13px 18px; font-size: 15px; cursor: pointer; font-family: inherit; width: 100%;
+      padding: 13px; font-size: 15px; cursor: pointer; font-family: inherit; width: 100%;
       -webkit-tap-highlight-color: transparent;
     }
-    .btn-c:hover { background: var(--bg); }
     .placeholder-note { font-size: 12px; color: #f5a623; margin-left: auto; white-space: nowrap; }
+
+    /* Hint text at bottom */
+    .expand-hint {
+      text-align: center; font-size: 12px; color: var(--text-tertiary);
+      margin-top: 10px; margin-bottom: 4px; letter-spacing: 0.02em;
+    }
   </style>
 </head>
 <body>
@@ -233,6 +255,7 @@
     <span id="dataDate" style="margin-left:auto;font-size:12px;color:var(--text-tertiary);"></span>
   </div>
   <div class="section-label">Watchlist</div>
+  <p class="expand-hint">Tap a card to see strategy details</p>
   <div class="grid" id="grid"></div>
 </div>
 
@@ -240,7 +263,7 @@
   <div class="modal">
     <div class="modal-handle"></div>
     <h2>Data Source</h2>
-    <p class="msub">Connected to your Google Apps Script. Tap Save to update the URL.</p>
+    <p class="msub">Connected to your Google Apps Script. Update the URL here if you redeploy.</p>
     <div class="fg">
       <label>Apps Script URL</label>
       <input id="mi-url" type="url" placeholder="https://script.google.com/macros/s/…/exec"/>
@@ -269,14 +292,13 @@ const PH = [
   {no:10, tk:"MINA", s1:248, s2:240, s3:226, r1:276, r2:300, r3:320, prevPrice:268, price:248,  change:-8.06},
 ];
 
-// Config
 let cfg = (() => {
   try { const s = localStorage.getItem("tw6"); return s ? JSON.parse(s) : {}; }
   catch { return {}; }
 })();
 const saveCfg = () => { try { localStorage.setItem("tw6", JSON.stringify(cfg)); } catch {} };
 
-// Gap rule based on the level's own price
+// Gap rule based on level price
 function gap(price) {
   if (price < 200)  return 2;
   if (price < 500)  return 4;
@@ -285,7 +307,6 @@ function gap(price) {
   return 50;
 }
 
-// Fetch from Apps Script
 async function fetchSheet() {
   const url = cfg.scriptUrl || D_URL;
   const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 12000));
@@ -294,9 +315,7 @@ async function fetchSheet() {
   const json = await r.json();
   if (json.status !== "ok") throw new Error("Script error");
   if (!json.data?.length) throw new Error("No data");
-
   if (json.lastUpdated) $("dataDate").textContent = `Data as of ${json.lastUpdated}`;
-
   return json.data.map((row, i) => {
     const num = v => { const n = parseFloat(String(v ?? "").replace(/[%,\s]/g, "")); return isNaN(n) ? null : n; };
     const rawChange = num(row.change);
@@ -313,35 +332,29 @@ async function fetchSheet() {
   }).filter(r => r.tk);
 }
 
-// Format number in Indonesian locale
 const fmt = n => (n != null && !isNaN(n)) ? parseFloat(n).toLocaleString("id-ID") : null;
 
-// Render a support row: Price | Stop Loss | Re-Entry
-// SL = level price - gap(level), Re-Entry = next level + gap(next level)
 function supportRow(tag, levelPrice, nextPrice) {
-  const f = fmt(levelPrice);
-  if (!f) return "";
-  const sl = levelPrice != null ? levelPrice - gap(levelPrice) : null;
-  const re = nextPrice  != null ? nextPrice  + gap(nextPrice)  : null;
+  if (levelPrice == null) return "";
+  const sl = levelPrice - gap(levelPrice);
+  const re = nextPrice != null ? nextPrice + gap(nextPrice) : null;
   return `
     <div class="level-row support-grid">
       <span class="level-tag">${tag}</span>
-      <span class="level-val">${fmt(levelPrice) ?? "—"}</span>
-      <span class="level-val">${fmt(sl) ?? "—"}</span>
-      <span class="level-val ${re == null ? "muted" : ""}">${fmt(re) ?? "N/A"}</span>
+      <span class="level-val">${fmt(levelPrice)}</span>
+      <span class="level-val">${fmt(sl)}</span>
+      <span class="level-val ${re == null ? "muted" : ""}">${re != null ? fmt(re) : "N/A"}</span>
     </div>`;
 }
 
-// Render a resistance row: Price | Entry
-// Entry = level price + gap(level)
 function resistRow(tag, levelPrice) {
   if (levelPrice == null) return "";
   const entry = levelPrice + gap(levelPrice);
   return `
     <div class="level-row resist-grid">
       <span class="level-tag">${tag}</span>
-      <span class="level-val">${fmt(levelPrice) ?? "—"}</span>
-      <span class="level-val">${fmt(entry) ?? "—"}</span>
+      <span class="level-val">${fmt(levelPrice)}</span>
+      <span class="level-val">${fmt(entry)}</span>
     </div>`;
 }
 
@@ -354,65 +367,77 @@ function card(s) {
   const priceStr = s.price != null ? parseFloat(s.price).toLocaleString("id-ID") : "—";
 
   return `
-  <div class="card" style="--card-top:${top}">
-    <div class="card-top">
+  <div class="card" style="--card-top:${top}" id="card-${s.no}">
+    <div class="card-summary" onclick="toggleCard('card-${s.no}')">
       <div class="ticker-wrap">
         <div class="num">${s.no}</div>
         <div class="ticker">${s.tk}</div>
       </div>
-      <div class="price-wrap">
-        <div class="price-row">
-          <div class="badge ${dir}">${arr} ${!isNaN(cn) ? sig+cn.toFixed(2)+"%" : "—"}</div>
-          <div class="price">${priceStr}</div>
+      <div class="summary-right">
+        <div class="price-block">
+          <div class="price-row">
+            <div class="badge ${dir}">${arr} ${!isNaN(cn) ? sig+cn.toFixed(2)+"%" : "—"}</div>
+            <div class="price">${priceStr}</div>
+          </div>
+          ${s.prevPrice != null ? `<div class="prev-price">Prev ${parseFloat(s.prevPrice).toLocaleString("id-ID")}</div>` : ""}
         </div>
-        ${s.prevPrice != null ? `<div class="prev-price">Prev ${parseFloat(s.prevPrice).toLocaleString("id-ID")}</div>` : ""}
+        <div class="chevron">▾</div>
       </div>
     </div>
 
-    <div class="zone-section">
-      <div class="zone-label s">Support</div>
-      <div class="col-headers support-grid">
-        <div class="col-head"></div>
-        <div class="col-head">Price</div>
-        <div class="col-head">Stop Loss</div>
-        <div class="col-head">Re-Entry</div>
+    <div class="card-detail">
+      <div class="card-detail-inner">
+        <div class="zone-section">
+          <div class="zone-label s">Support</div>
+          <div class="col-headers support-grid">
+            <div class="col-head"></div>
+            <div class="col-head">Price</div>
+            <div class="col-head">Stop Loss</div>
+            <div class="col-head">Re-Entry</div>
+          </div>
+          ${supportRow("S1", s.s1, s.s2)}
+          ${supportRow("S2", s.s2, s.s3)}
+          ${supportRow("S3", s.s3, null)}
+        </div>
+        <div class="divider"></div>
+        <div class="zone-section">
+          <div class="zone-label r">Resistance</div>
+          <div class="col-headers resist-grid">
+            <div class="col-head"></div>
+            <div class="col-head">Price</div>
+            <div class="col-head">Entry</div>
+          </div>
+          ${resistRow("R1", s.r1)}
+          ${resistRow("R2", s.r2)}
+          ${resistRow("R3", s.r3)}
+        </div>
       </div>
-      ${supportRow("S1", s.s1, s.s2)}
-      ${supportRow("S2", s.s2, s.s3)}
-      ${supportRow("S3", s.s3, null)}
-    </div>
-
-    <hr class="divider">
-
-    <div class="zone-section">
-      <div class="zone-label r">Resistance</div>
-      <div class="col-headers resist-grid">
-        <div class="col-head"></div>
-        <div class="col-head">Price</div>
-        <div class="col-head">Entry</div>
-      </div>
-      ${resistRow("R1", s.r1)}
-      ${resistRow("R2", s.r2)}
-      ${resistRow("R3", s.r3)}
     </div>
   </div>`;
+}
+
+function toggleCard(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle("open");
 }
 
 function skeletons(n=4) {
   document.getElementById("grid").innerHTML = Array.from({length:n}).map(()=>`
     <div class="card">
-      <div style="display:flex;justify-content:space-between;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 14px;">
         <div style="display:flex;gap:8px;align-items:center">
           <div class="skel" style="width:22px;height:22px;border-radius:6px"></div>
-          <div class="skel" style="width:72px;height:24px"></div>
+          <div class="skel" style="width:80px;height:26px"></div>
         </div>
-        <div style="text-align:right">
-          <div class="skel" style="width:80px;height:24px;margin-bottom:5px"></div>
-          <div class="skel" style="width:55px;height:14px"></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="text-align:right">
+            <div class="skel" style="width:100px;height:26px;margin-bottom:5px"></div>
+            <div class="skel" style="width:60px;height:13px"></div>
+          </div>
+          <div class="skel" style="width:16px;height:16px;border-radius:4px"></div>
         </div>
       </div>
-      <div class="skel" style="height:120px;border-radius:10px;margin-bottom:10px"></div>
-      <div class="skel" style="height:90px;border-radius:10px"></div>
     </div>`).join("");
 }
 
