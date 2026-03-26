@@ -181,8 +181,8 @@
 </div>
 
 <script>
-// ── Direct published CSV URL from Google Sheets ───────
-const D_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTGGq5EibM0_CgZPcux37EwoHEMV650Cx3DyNeWX4vChBX612Wm5lDeXDNrdQMYAZZG-lOEU1Icb8Fu/pub?gid=0&single=true&output=csv";
+// Published CSV URL kept as fallback reference (not used — Apps Script is primary)
+// const D_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1v.../pub?output=csv";
 
 // Placeholder — shown if sheet is unreachable
 // Cols: No, Ticker, S1, S2, S3, R1, R2, R3, PrevPrice, LastPrice, Change%
@@ -199,46 +199,47 @@ const PH = [
   {no:10, tk:"MINA", s1:248, s2:240, s3:226, r1:276, r2:300, r3:320, prevPrice:268, price:248,  change:-8.06},
 ];
 
-// Config — stores any custom CSV URL the user sets via settings modal
+// Config
 let cfg = (() => {
-  try { const s = localStorage.getItem("tw5"); return s ? JSON.parse(s) : {csvUrl: D_CSV}; }
-  catch { return {csvUrl: D_CSV}; }
+  try { const s = localStorage.getItem("tw5"); return s ? JSON.parse(s) : {}; }
+  catch { return {}; }
 })();
 const saveCfg = () => { try { localStorage.setItem("tw5", JSON.stringify(cfg)); } catch {} };
 
-// Fetch with timeout using Promise.race — no AbortSignal needed
-function fetchWithTimeout(url, ms = 10000) {
-  const timeout = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error("Request timed out")), ms)
-  );
-  return Promise.race([fetch(url), timeout]);
-}
+// Fetch directly from Google Apps Script — no proxy needed, always fresh
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxUcwywAXYIQExhJ4RU3jObdJdoaFH8bYhc5-n9p1FiYQdK4ZDDS-8swhvEOzXYBzRj/exec";
 
-// Fetch sheet — CORS proxies only (direct fetch blocked by browser CORS policy)
 async function fetchSheet() {
-  const csvUrl = cfg.csvUrl || D_CSV;
-  const urls = [
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(csvUrl)}`,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(csvUrl)}`,
-  ];
-  let lastErr;
-  for (const url of urls) {
-    try {
-      console.log("Trying:", url.split("?")[0]);
-      const r = await fetchWithTimeout(url, 12000);
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const text = await r.text();
-      if (!text || text.trim().length < 5) throw new Error("Empty response");
-      // Make sure we got CSV and not an error page
-      if (text.trim().startsWith("<")) throw new Error("Got HTML instead of CSV");
-      console.log("Success! First line:", text.split("\n")[0]);
-      return parseCSV(text);
-    } catch(e) {
-      console.warn("Proxy failed:", e.message);
-      lastErr = e;
-    }
-  }
-  throw new Error(lastErr?.message || "All proxies failed");
+  const url = APPS_SCRIPT_URL;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const json = await r.json();
+  if (json.status !== "ok") throw new Error("Script returned error");
+  if (!json.data?.length) throw new Error("No data returned");
+  return json.data.map((row, i) => {
+    const num = v => {
+      const s = String(v ?? "").replace(/[%,\s]/g, "").trim();
+      const n = parseFloat(s);
+      return isNaN(n) ? null : n;
+    };
+    const rawChange = num(row.change);
+    const change = rawChange !== null
+      ? (Math.abs(rawChange) <= 1 ? rawChange * 100 : rawChange)
+      : null;
+    return {
+      no:        row.no ?? i + 1,
+      tk:        String(row.ticker || "").trim().toUpperCase(),
+      s1:        num(row.s1),
+      s2:        num(row.s2),
+      s3:        num(row.s3),
+      r1:        num(row.r1),
+      r2:        num(row.r2),
+      r3:        num(row.r3),
+      prevPrice: num(row.prevPrice),
+      price:     num(row.price),
+      change,
+    };
+  }).filter(r => r.tk);
 }
 
 // CSV parser
